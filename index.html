@@ -106,6 +106,7 @@
       <div class="err" id="gateErr" role="alert"></div>
       <button class="btn" id="gateBtn" type="submit">View the leaderboard</button>
     </form>
+    <div class="lockrow"><button class="sbtn" id="gateStaff" type="button">Staff entry</button></div>
   </main>
 
   <!-- 2. Leaderboard -->
@@ -191,6 +192,7 @@ var VIEWERS = db.ref("viewers");
 var viewer = null;        // {name,email} once registered on this device
 var tab = "board";        // "board" | "staff"
 var staffOk = false;
+var bypass = false;      // staff tapped "Staff entry" on the front page
 var big = false;
 var shots = [];           // [{id,name,inches,ts}]
 var editId = null;
@@ -230,7 +232,7 @@ function sorted() { return shots.slice().sort(function (a, b) { return a.inches 
 
 // ── View switching (shells are static, so typing is never wiped) ───
 function showView() {
-  var gate = !viewer;
+  var gate = !viewer && !staffOk && !bypass;
   var showBoard = !gate && (tab === "board" || big);
   var showPin = !gate && !big && tab === "staff" && !staffOk;
   var showStaff = !gate && !big && tab === "staff" && staffOk;
@@ -309,6 +311,9 @@ $("gateForm").addEventListener("submit", function (e) {
   viewer = v; saveViewer(v); showView();
 });
 
+// ── Staff shortcut on the front page (skips name/email) ────────────
+$("gateStaff").onclick = function () { bypass = true; tab = "staff"; showView(); };
+
 // ── Nav ────────────────────────────────────────────────────────────
 $("tabBoard").onclick = function () { tab = "board"; showView(); };
 $("tabStaff").onclick = function () { tab = "staff"; showView(); };
@@ -331,7 +336,7 @@ $("pinForm").addEventListener("submit", function (e) {
 });
 $("lockBtn").onclick = function () {
   db.ref("staffClaims/" + uid).remove().catch(function () {});
-  staffOk = false; cancelEdit(); showView();
+  staffOk = false; if (!viewer) { bypass = false; tab = "board"; } cancelEdit(); showView();
 };
 
 // ── 3) Record / edit / delete shots ────────────────────────────────
