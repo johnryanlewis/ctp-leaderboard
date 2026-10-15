@@ -61,6 +61,7 @@
   #root.big .row{padding:24px 20px;}
   #root.big .rank{font-size:40px;width:64px;}
   #root.big .pname,#root.big .dist{font-size:36px;}
+  #root.big #resetRow{display:none;}
   #exitBig{position:fixed;right:16px;bottom:16px;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:2px;padding:10px 16px;font:600 13px Inter;cursor:pointer;}
 
   /* staff */
@@ -116,6 +117,7 @@
     <p class="lede">Win a Taylormade Qi4D Driver. Closest shot at the end of the day takes it.</p>
     <div id="boardRows" class="rows"></div>
     <div class="updated" id="updated"></div>
+    <div class="lockrow" id="resetRow"><button class="sbtn" id="resetViewer" type="button">Not you? Back to start</button></div>
   </main>
 
   <!-- 3. Staff PIN -->
@@ -313,6 +315,15 @@ $("gateForm").addEventListener("submit", function (e) {
 
 // ── Staff shortcut on the front page (skips name/email) ────────────
 $("gateStaff").onclick = function () { bypass = true; tab = "staff"; showView(); };
+
+// ── Back to the front page (clears this device's saved guest) ─────
+$("resetViewer").onclick = function () {
+  clearViewer(); viewer = null; bypass = false; tab = "board"; big = false;
+  if (uid && staffOk) db.ref("staffClaims/" + uid).remove().catch(function () {});
+  staffOk = false;
+  $("vName").value = ""; $("vEmail").value = ""; $("gateErr").textContent = "";
+  showView();
+};
 
 // ── Nav ────────────────────────────────────────────────────────────
 $("tabBoard").onclick = function () { tab = "board"; showView(); };
