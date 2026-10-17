@@ -50,7 +50,11 @@
   .row{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:2px;background:rgba(255,255,255,.08);}
   .row.lead{background:#04D3AA;color:#120A48;}
   .rank{font:800 24px InterDisplay,Inter;width:40px;color:#04D3AA;}
-  .row.lead .rank{color:#120A48;}
+  .row.lead .rank{color:#120A48;font-size:40px;width:56px;}
+  .row.lead{padding:28px 24px;box-shadow:0 0 0 3px #fff,0 12px 36px rgba(4,211,170,.4);margin-bottom:8px;}
+  .row.lead .pname{font-size:26px;}
+  .row.lead .pname::before{content:"Leading";display:block;font:700 12px Inter;letter-spacing:.08em;margin-bottom:4px;}
+  .row.lead .dist{font-size:32px;}
   .pname{flex:1;min-width:0;font:700 20px Inter;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .dist{font:800 20px Inter;letter-spacing:-.02em;white-space:nowrap;}
   .empty{border:1px dashed rgba(255,255,255,.35);border-radius:2px;padding:48px 24px;text-align:center;font:500 18px Inter;color:#EAEFFF;}
@@ -62,6 +66,7 @@
   #root.big .row{padding:24px 20px;}
   #root.big .rank{font-size:40px;width:64px;}
   #root.big .pname,#root.big .dist{font-size:36px;}
+  #root.big .row.lead .pname{font-size:48px;}#root.big .row.lead .dist{font-size:56px;}#root.big .row.lead .rank{font-size:64px;width:88px;}
   #root.big #resetRow{display:none;}
   #exitBig{position:fixed;right:16px;bottom:16px;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:2px;padding:10px 16px;font:600 13px Inter;cursor:pointer;}
 
@@ -80,7 +85,7 @@
   .lockrow{margin-top:16px;}
   .setup{max-width:560px;margin:80px auto;padding:24px;font:500 16px/1.5 Inter;}
   @media (max-width:700px){.bgart{background-size:675px auto;}}
-  @media (max-width:520px){header{padding:16px;}main{padding:16px 16px 64px;}.card{padding:24px;}.row{padding:14px;gap:12px;}.pname,.dist{font-size:17px;}.srow{flex-wrap:wrap;}}
+  @media (max-width:520px){header{padding:16px;}main{padding:16px 16px 64px;}.card{padding:24px;}.row{padding:14px;gap:12px;}.pname,.dist{font-size:17px;}.row.lead{padding:20px 16px;}.row.lead .rank{font-size:32px;width:44px;}.row.lead .pname{font-size:20px;}.row.lead .dist{font-size:24px;}.srow{flex-wrap:wrap;}}
 </style>
 </head>
 <body>
@@ -98,7 +103,7 @@
 
   <!-- 1. Name + email gate -->
   <main id="vGate" style="max-width:520px;" hidden>
-    <div class="eyebrow">SAP Els for Autism Grand Finale</div>
+    <div class="eyebrow">Els for Autism Golf Challenge Grande Finale - The Breakers</div>
     <h1>Closest to the Pin</h1>
     <p class="lede">Prize: a Taylormade Qi4D Driver. Enter your name and email to follow the leaderboard live.</p>
     <form id="gateForm" class="card" novalidate>
