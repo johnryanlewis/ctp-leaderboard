@@ -70,6 +70,31 @@
   #root.big #resetRow{display:none;}
   #exitBig{position:fixed;right:16px;bottom:16px;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:2px;padding:10px 16px;font:600 13px Inter;cursor:pointer;}
 
+  /* days + prizes */
+  .days{display:flex;gap:8px;margin:0 0 24px;flex-wrap:wrap;}
+  .daybtn{background:rgba(255,255,255,.08);color:#fff;border:0;border-radius:999px;padding:10px 18px;font:600 14px Inter,sans-serif;cursor:pointer;}
+  .daybtn.on{background:#04D3AA;color:#120A48;font-weight:700;}
+  .livetag{margin-left:8px;font:700 12px Inter;color:#04D3AA;}
+  .daybtn.on .livetag{color:#120A48;}
+  .panel{margin-top:32px;}
+  .prizes{display:flex;flex-direction:column;gap:8px;}
+  .prize{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:2px;background:rgba(255,255,255,.08);}
+  .prize .pn{flex:1;font:600 17px Inter;}
+  .prize .pt{font:600 13px Inter;color:#04D3AA;white-space:nowrap;}
+  .prize.taken .pn{text-decoration:line-through;opacity:.5;}
+  .prize.taken .pt{color:#FA6496;}
+  .prizenote{margin-top:10px;font:400 14px Inter;color:#EAEFFF;}
+  .card.slim{padding:20px;gap:12px;}
+  .card .daybtn{background:#EEF0F8;color:#120A48;}
+  .card .daybtn.on{background:#120A48;color:#fff;}
+  .slimtitle{font:700 15px Inter;}
+  .hint{font:400 13px/1.4 Inter;color:#5a5a7a;}
+  select{padding:14px;border:1px solid #ccd;background:#fff;border-radius:2px;font:400 16px Inter;color:#120A48;width:100%;}
+  select:focus-visible,.daybtn:focus-visible{outline:3px solid #549CFF;outline-offset:2px;}
+  #root.big .daybtn{font-size:20px;padding:12px 24px;}
+  #root.big .prize .pn{font-size:28px;}#root.big .prize .pt{font-size:20px;}#root.big .prize{padding:20px 24px;}#root.big .prizenote{font-size:20px;}
+  #root.big .stafftitle{font-size:16px;}
+
   /* staff */
   .staffgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start;}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -105,7 +130,7 @@
   <main id="vGate" style="max-width:520px;" hidden>
     <div class="eyebrow">Els for Autism Golf Challenge Grande Finale - The Breakers</div>
     <h1>Closest to the Pin</h1>
-    <p class="lede">Prize: a Taylormade Qi4D Driver. Enter your name and email to follow the leaderboard live.</p>
+    <p class="lede">Closest to the Pin runs both days, with Taylormade prizes to win. Enter your name and email to follow the leaderboard live.</p>
     <form id="gateForm" class="card" novalidate>
       <label>Name
         <input id="vName" autocomplete="name" placeholder="Your full name"></label>
@@ -119,10 +144,15 @@
 
   <!-- 2. Leaderboard -->
   <main id="vBoard" style="max-width:860px;" hidden>
-    <div class="eyebrow">Live leaderboard</div>
+    <div class="eyebrow" id="boardEyebrow">Live leaderboard</div>
     <h1>Closest to the Pin</h1>
-    <p class="lede">Win a Taylormade Qi4D Driver. Closest shot at the end of the day takes it.</p>
+    <p class="lede" id="boardLede"></p>
+    <div class="days" role="group" aria-label="Choose day">
+      <button class="daybtn" id="tabD1" type="button">Day 1</button>
+      <button class="daybtn" id="tabD2" type="button">Day 2</button>
+    </div>
     <div id="boardRows" class="rows"></div>
+    <div id="prizePanel" class="panel"></div>
     <div class="updated" id="updated"></div>
     <div class="lockrow" id="resetRow"><button class="sbtn" id="resetViewer" type="button">Not you? Back to start</button></div>
   </main>
@@ -142,8 +172,21 @@
   <main id="vStaff" style="max-width:860px;" hidden>
     <div class="staffgrid">
       <div>
+        <div class="card slim" style="margin-bottom:16px;">
+          <div class="slimtitle">Live day for guests</div>
+          <div class="days" style="margin:0" role="group" aria-label="Live day for guests">
+            <button class="daybtn" id="liveD1" type="button">Day 1</button>
+            <button class="daybtn" id="liveD2" type="button">Day 2</button>
+          </div>
+          <div class="hint" id="liveHint">Every guest's phone switches to this day.</div>
+        </div>
         <form id="shotForm" class="card" novalidate>
           <h2 id="formTitle">Record a shot</h2>
+          <div class="slimtitle">Recording for</div>
+          <div class="days" style="margin:0" role="group" aria-label="Recording for">
+            <button class="daybtn" id="sD1" type="button">Day 1</button>
+            <button class="daybtn" id="sD2" type="button">Day 2</button>
+          </div>
           <label>Player name
             <input id="fName" autocomplete="off"></label>
           <div class="two">
@@ -158,10 +201,17 @@
             <button class="btn ghost" id="cancelBtn" type="button" hidden>Cancel</button>
           </div>
         </form>
+        <div class="card slim" style="margin-top:16px;">
+          <div class="slimtitle">Day 1 winner's prize pick</div>
+          <select id="pickSel" aria-label="Prize chosen by the Day 1 winner"></select>
+          <div class="err" id="pickMsg" role="alert"></div>
+          <button class="btn dark" id="pickBtn" type="button">Save pick</button>
+          <div class="hint">Day 2 will show this prize as taken.</div>
+        </div>
         <div class="lockrow"><button class="sbtn" id="lockBtn" type="button">Lock staff entry</button></div>
       </div>
       <div>
-        <div class="stafftitle">Recorded shots</div>
+        <div class="stafftitle" id="staffListTitle">Recorded shots</div>
         <div id="staffRows" class="rows"></div>
       </div>
     </div>
@@ -222,7 +272,7 @@ var authReady = firebase.auth().signInAnonymously().then(function (cred) {
   uid = cred.user.uid;
   // Was this device already unlocked as staff?
   return db.ref("staffClaims/" + uid).once("value").then(function (s) {
-    if (s.val() === "2345") { staffOk = true; showView(); }
+    if (s.exists()) { staffOk = true; showView(); }
   }).catch(function () {});
 });
 authReady.catch(function (e) { console.error("Auth failed", e); });
@@ -257,9 +307,48 @@ function showView() {
   $("tabStaff").classList.toggle("on", tab === "staff");
 }
 
+// ── Event setup: edit prizes here ──────────────────────────────────
+// key = short id saved in the database, qty = how many of that prize exist
+var PRIZES = [
+  { key: "driver", name: "Taylormade Qi4D Driver", qty: 2 },
+  { key: "zt",     name: "Taylormade Spider ZT Putter", qty: 1 },
+  { key: "tourx",  name: "Taylormade Spider Tour X Putter", qty: 1 }
+];
+
+// ── Day + prize state ──────────────────────────────────────────────
+var activeDay = 1;        // the day guests' phones show by default (set by staff)
+var viewDay = null;       // a guest's own tab choice (null = follow live day)
+var staffDay = null;      // the day staff are recording/editing (null = live day)
+var day1Pick = null;      // prize key chosen by the Day 1 winner
+function curView() { return viewDay || activeDay; }
+function curStaff() { return staffDay || activeDay; }
+function dayShots(d) { return shots.filter(function (x) { return x.day === d; }).sort(function (a, b) { return a.inches - b.inches; }); }
+function dayLabel(n) { return "Day " + n + (activeDay === n ? '<span class="livetag">Live</span>' : ""); }
+
 // ── Dynamic lists (only these containers are re-rendered) ──────────
+function renderPrizes() {
+  var day = curView(), h = "";
+  PRIZES.forEach(function (p) {
+    var picked = day1Pick === p.key, left = p.qty - (day === 2 && picked ? 1 : 0), tag, cls = "prize";
+    if (day === 2) {
+      if (left <= 0) { cls += " taken"; tag = "Taken by Day 1 winner"; }
+      else tag = p.qty > 1 ? left + " left" : "Available";
+    } else {
+      tag = (p.qty > 1 ? p.qty + " available" : "Available") + (picked ? ". Day 1 winner's pick" : "");
+    }
+    h += '<div class="' + cls + '"><div class="pn">' + esc(p.name) + '</div><div class="pt">' + esc(tag) + '</div></div>';
+  });
+  var note = day === 2 && !day1Pick ? '<div class="prizenote">The Day 1 winner has not picked yet.</div>' : "";
+  $("prizePanel").innerHTML = '<div class="stafftitle">' + (day === 1 ? "Prizes up for grabs" : "Prizes still available") + '</div><div class="prizes">' + h + '</div>' + note;
+}
 function renderBoard() {
-  var rows = sorted();
+  var day = curView(), rows = dayShots(day);
+  $("tabD1").innerHTML = dayLabel(1); $("tabD2").innerHTML = dayLabel(2);
+  $("tabD1").classList.toggle("on", day === 1); $("tabD2").classList.toggle("on", day === 2);
+  $("boardEyebrow").textContent = "Day " + day + " leaderboard" + (day === activeDay ? " · Live" : "");
+  $("boardLede").textContent = day === 1
+    ? "Closest shot at the end of the day gets first pick of the prizes below."
+    : "Closest shot at the end of the day picks from the prizes that are left.";
   $("boardRows").innerHTML = rows.length
     ? rows.map(function (x, i) {
         return '<div class="row' + (i === 0 ? " lead" : "") + '">' +
@@ -268,12 +357,16 @@ function renderBoard() {
           '<div class="dist">' + fmt(x.inches) + '</div></div>';
       }).join("")
     : '<div class="empty">No shots yet. The first one on the green takes the lead.</div>';
+  renderPrizes();
   $("updated").textContent = online
     ? "Updated " + updatedAt + ". Refreshes automatically."
     : "Offline. Reconnecting...";
 }
 function renderStaff() {
-  var rows = sorted();
+  var day = curStaff(), rows = dayShots(day);
+  $("sD1").classList.toggle("on", day === 1); $("sD2").classList.toggle("on", day === 2);
+  $("liveD1").classList.toggle("on", activeDay === 1); $("liveD2").classList.toggle("on", activeDay === 2);
+  $("staffListTitle").textContent = "Day " + day + " shots";
   $("staffRows").innerHTML = rows.length
     ? rows.map(function (x, i) {
         return '<div class="srow">' +
@@ -284,17 +377,32 @@ function renderStaff() {
           '<button class="sbtn del" data-act="del" data-id="' + esc(x.id) + '">' + (confirmId === x.id ? "Confirm" : "Delete") + '</button>' +
           '</div>';
       }).join("")
-    : '<div style="color:#EAEFFF;font:400 15px Inter">No shots recorded yet.</div>';
+    : '<div style="color:#EAEFFF;font:400 15px Inter">No shots recorded for Day ' + day + ' yet.</div>';
+}
+function initPick() {
+  $("pickSel").innerHTML = '<option value="">Not chosen yet</option>' +
+    PRIZES.map(function (p) { return '<option value="' + esc(p.key) + '">' + esc(p.name) + '</option>'; }).join("");
+  $("pickSel").value = day1Pick || "";
 }
 
 // ── Live data ──────────────────────────────────────────────────────
 SHOTS.on("value", function (snap) {
   var d = snap.val() || {};
-  shots = Object.keys(d).map(function (k) { return { id: k, name: d[k].name, inches: d[k].inches, ts: d[k].ts }; });
+  shots = Object.keys(d).map(function (k) {
+    return { id: k, name: d[k].name, inches: d[k].inches, ts: d[k].ts, day: d[k].day === 2 ? 2 : 1 };
+  });
   updatedAt = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
   renderBoard(); renderStaff();
 }, function (err) {
   $("boardRows").innerHTML = '<div class="empty">Could not load the leaderboard. ' + esc(err.message) + '</div>';
+});
+db.ref("config").on("value", function (snap) {
+  var c = snap.val() || {}, d = c.activeDay === 2 ? 2 : 1;
+  if (d !== activeDay) { viewDay = null; staffDay = null; cancelEdit(); }   // live day changed: everyone follows
+  activeDay = d;
+  day1Pick = c.day1Pick || null;
+  $("pickSel").value = day1Pick || "";
+  renderBoard(); renderStaff();
 });
 db.ref(".info/connected").on("value", function (s) { online = s.val() === true; renderBoard(); });
 
@@ -357,6 +465,30 @@ $("lockBtn").onclick = function () {
   staffOk = false; if (!viewer) { bypass = false; tab = "board"; } cancelEdit(); showView();
 };
 
+// ── Day tabs, live-day switch, prize pick ──────────────────────────
+$("tabD1").onclick = function () { viewDay = 1; renderBoard(); };
+$("tabD2").onclick = function () { viewDay = 2; renderBoard(); };
+$("sD1").onclick = function () { staffDay = 1; cancelEdit(); renderStaff(); };
+$("sD2").onclick = function () { staffDay = 2; cancelEdit(); renderStaff(); };
+function staffFail(el) {
+  el.textContent = "Could not save. Re-enter the staff PIN.";
+  staffOk = false; db.ref("staffClaims/" + uid).remove().catch(function () {}); showView();
+}
+function setLive(n) {
+  $("liveHint").textContent = "Every guest's phone switches to this day.";
+  db.ref("config/activeDay").set(n).catch(function () { staffFail($("liveHint")); });
+}
+$("liveD1").onclick = function () { setLive(1); };
+$("liveD2").onclick = function () { setLive(2); };
+$("pickBtn").onclick = function () {
+  var v = $("pickSel").value, ref = db.ref("config/day1Pick");
+  $("pickMsg").textContent = "";
+  (v ? ref.set(v) : ref.remove()).then(function () {
+    $("pickMsg").style.color = "#0a7d63"; $("pickMsg").textContent = "Saved.";
+    setTimeout(function () { $("pickMsg").textContent = ""; $("pickMsg").style.color = ""; }, 2000);
+  }).catch(function () { staffFail($("pickMsg")); });
+};
+
 // ── 3) Record / edit / delete shots ────────────────────────────────
 function cancelEdit() {
   editId = null;
@@ -376,11 +508,12 @@ $("shotForm").addEventListener("submit", function (e) {
   if (!$("fFeet").value && !$("fIn").value) { $("formErr").textContent = "Enter a distance."; return; }
   var total = ft * 12 + inch;
 
+  var day = curStaff();
   var op = editId
-    ? SHOTS.child(editId).update({ name: name, inches: total })
-    : SHOTS.push({ name: name, inches: total, ts: firebase.database.ServerValue.TIMESTAMP });
+    ? SHOTS.child(editId).update({ name: name, inches: total, day: day })
+    : SHOTS.push({ name: name, inches: total, day: day, ts: firebase.database.ServerValue.TIMESTAMP });
   op.then(function () { cancelEdit(); })
-    .catch(function () { $("formErr").textContent = "Could not save. Re-enter the staff PIN."; staffOk = false; showView(); });
+    .catch(function () { $("formErr").textContent = "Could not save. Re-enter the staff PIN."; staffOk = false; db.ref("staffClaims/" + uid).remove().catch(function () {}); showView(); });
 });
 
 $("staffRows").addEventListener("click", function (e) {
@@ -411,6 +544,7 @@ $("staffRows").addEventListener("click", function (e) {
 });
 
 // ── Go ─────────────────────────────────────────────────────────────
+initPick();
 showView();
 renderBoard(); renderStaff();
 </script>
