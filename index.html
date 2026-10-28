@@ -83,8 +83,19 @@
   .prize .pt{font:600 13px Inter;color:#04D3AA;white-space:nowrap;}
   .prize.taken .pn{text-decoration:line-through;opacity:.5;}
   .prize.taken .pt{color:#FA6496;}
-  .lhnote{margin-top:12px;padding:14px 20px;border-left:4px solid #04D3AA;background:rgba(4,211,170,.12);border-radius:2px;font:600 16px/1.4 Inter;}
-  #root.big .lhnote{font-size:24px;padding:20px 24px;}
+  #prizePanel{margin-top:56px;}
+  .prizebox{border:2px solid #04D3AA;border-radius:2px;overflow:hidden;}
+  .prizehead{background:#04D3AA;color:#120A48;padding:20px 24px;}
+  .ptitle{font:800 28px/1.1 InterDisplay,Inter,sans-serif;letter-spacing:-.02em;}
+  .lhsub{margin-top:8px;font:600 15px/1.4 Inter;}
+  .prizebox .prizes{padding:12px;}
+  .prizebox .prizenote{margin:0;padding:0 24px 16px;}
+  .prizebtn{border:1px solid #04D3AA;color:#04D3AA;background:transparent;}
+  #root.big .prizebtn{display:none;}
+  #root.big .ptitle{font-size:44px;}#root.big .lhsub{font-size:24px;}
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(10,5,40,.82);display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modalbox{background:#120A48;width:100%;max-width:480px;max-height:88vh;overflow:auto;border-radius:2px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .modalbox .closerow{display:flex;justify-content:flex-end;margin-bottom:8px;}
   .prizenote{margin-top:10px;font:400 14px Inter;color:#EAEFFF;}
   .card.slim{padding:20px;gap:12px;}
   .card .daybtn{background:#EEF0F8;color:#120A48;}
@@ -152,6 +163,7 @@
     <div class="days" role="group" aria-label="Choose day">
       <button class="daybtn" id="tabD1" type="button">Day 1</button>
       <button class="daybtn" id="tabD2" type="button">Day 2</button>
+      <button class="daybtn prizebtn" id="btnPrizes" type="button" aria-haspopup="dialog">Prizes</button>
     </div>
     <div id="boardRows" class="rows"></div>
     <div id="prizePanel" class="panel"></div>
@@ -221,6 +233,13 @@
       </div>
     </div>
   </main>
+
+  <div class="modal" id="prizeModal" hidden>
+    <div class="modalbox" role="dialog" aria-modal="true" aria-label="Prize status">
+      <div class="closerow"><button class="sbtn" id="pmClose" type="button">Close</button></div>
+      <div id="pmBody"></div>
+    </div>
+  </div>
 
   <button id="exitBig" hidden>Exit big screen</button>
 </div>
@@ -331,8 +350,8 @@ function dayShots(d) { return shots.filter(function (x) { return x.day === d; })
 function dayLabel(n) { return "Day " + n + (activeDay === n ? '<span class="livetag">Live</span>' : ""); }
 
 // ── Dynamic lists (only these containers are re-rendered) ──────────
-function renderPrizes() {
-  var day = curView(), h = "";
+function prizeBox(day) {
+  var h = "";
   PRIZES.forEach(function (p) {
     var picked = day1Pick === p.key, left = p.qty - (day === 2 && picked ? 1 : 0), tag, cls = "prize";
     if (day === 2) {
@@ -344,8 +363,15 @@ function renderPrizes() {
     h += '<div class="' + cls + '"><div class="pn">' + esc(p.name) + '</div><div class="pt">' + esc(tag) + '</div></div>';
   });
   var note = day === 2 && !day1Pick ? '<div class="prizenote">The Day 1 winner has not picked yet.</div>' : "";
-  $("prizePanel").innerHTML = '<div class="stafftitle">' + (day === 1 ? "Prizes up for grabs" : "Prizes still available") + '</div><div class="prizes">' + h + '</div>' +
-    '<div class="lhnote">Left-handed? Let us know if you\'re the winner and we\'ll set you up</div>' + note;
+  return '<div class="prizebox"><div class="prizehead">' +
+    '<div class="ptitle">' + (day === 1 ? "Prizes up for grabs" : "Prizes still available") + '</div>' +
+    '<div class="lhsub">Left-handed? Let us know if you\'re the winner and we\'ll set you up</div></div>' +
+    '<div class="prizes">' + h + '</div>' + note + '</div>';
+}
+function renderPrizes() {
+  var html = prizeBox(curView());
+  $("prizePanel").innerHTML = html;
+  if (!$("prizeModal").hidden) $("pmBody").innerHTML = html;   // keep an open popup live
 }
 function renderBoard() {
   var day = curView(), rows = dayShots(day);
@@ -470,6 +496,23 @@ $("lockBtn").onclick = function () {
   db.ref("staffClaims/" + uid).remove().catch(function () {});
   staffOk = false; if (!viewer) { bypass = false; tab = "board"; } cancelEdit(); showView();
 };
+
+// ── Prizes popup ───────────────────────────────────────────────────
+var lastFocus = null;
+function openPrizes() {
+  lastFocus = document.activeElement;
+  $("prizeModal").hidden = false;
+  renderPrizes();
+  $("pmClose").focus();
+}
+function closePrizes() {
+  $("prizeModal").hidden = true;
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+$("btnPrizes").onclick = openPrizes;
+$("pmClose").onclick = closePrizes;
+$("prizeModal").addEventListener("click", function (e) { if (e.target === $("prizeModal")) closePrizes(); });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("prizeModal").hidden) closePrizes(); });
 
 // ── Day tabs, live-day switch, prize pick ──────────────────────────
 $("tabD1").onclick = function () { viewDay = 1; renderBoard(); };
