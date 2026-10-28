@@ -83,6 +83,8 @@
   .prize .pt{font:600 13px Inter;color:#04D3AA;white-space:nowrap;}
   .prize.taken .pn{text-decoration:line-through;opacity:.5;}
   .prize.taken .pt{color:#FA6496;}
+  .lhnote{margin-top:12px;padding:14px 20px;border-left:4px solid #04D3AA;background:rgba(4,211,170,.12);border-radius:2px;font:600 16px/1.4 Inter;}
+  #root.big .lhnote{font-size:24px;padding:20px 24px;}
   .prizenote{margin-top:10px;font:400 14px Inter;color:#EAEFFF;}
   .card.slim{padding:20px;gap:12px;}
   .card .daybtn{background:#EEF0F8;color:#120A48;}
@@ -205,8 +207,11 @@
           <div class="slimtitle">Day 1 winner's prize pick</div>
           <select id="pickSel" aria-label="Prize chosen by the Day 1 winner"></select>
           <div class="err" id="pickMsg" role="alert"></div>
-          <button class="btn dark" id="pickBtn" type="button">Save pick</button>
-          <div class="hint">Day 2 will show this prize as taken.</div>
+          <div class="btnrow">
+            <button class="btn dark" id="pickBtn" type="button">Save pick</button>
+            <button class="btn ghost" id="pickClear" type="button">Clear pick</button>
+          </div>
+          <div class="hint">Day 2 shows the picked prize as taken. Clear the pick to put it back.</div>
         </div>
         <div class="lockrow"><button class="sbtn" id="lockBtn" type="button">Lock staff entry</button></div>
       </div>
@@ -339,7 +344,8 @@ function renderPrizes() {
     h += '<div class="' + cls + '"><div class="pn">' + esc(p.name) + '</div><div class="pt">' + esc(tag) + '</div></div>';
   });
   var note = day === 2 && !day1Pick ? '<div class="prizenote">The Day 1 winner has not picked yet.</div>' : "";
-  $("prizePanel").innerHTML = '<div class="stafftitle">' + (day === 1 ? "Prizes up for grabs" : "Prizes still available") + '</div><div class="prizes">' + h + '</div>' + note;
+  $("prizePanel").innerHTML = '<div class="stafftitle">' + (day === 1 ? "Prizes up for grabs" : "Prizes still available") + '</div><div class="prizes">' + h + '</div>' +
+    '<div class="lhnote">Left-handed? Let us know if you\'re the winner and we\'ll set you up</div>' + note;
 }
 function renderBoard() {
   var day = curView(), rows = dayShots(day);
@@ -480,14 +486,17 @@ function setLive(n) {
 }
 $("liveD1").onclick = function () { setLive(1); };
 $("liveD2").onclick = function () { setLive(2); };
-$("pickBtn").onclick = function () {
-  var v = $("pickSel").value, ref = db.ref("config/day1Pick");
+function savePick(v) {
+  var ref = db.ref("config/day1Pick");
   $("pickMsg").textContent = "";
   (v ? ref.set(v) : ref.remove()).then(function () {
-    $("pickMsg").style.color = "#0a7d63"; $("pickMsg").textContent = "Saved.";
-    setTimeout(function () { $("pickMsg").textContent = ""; $("pickMsg").style.color = ""; }, 2000);
+    $("pickSel").value = v || "";
+    $("pickMsg").style.color = "#0a7d63"; $("pickMsg").textContent = v ? "Saved." : "Pick cleared. Prize is available again.";
+    setTimeout(function () { $("pickMsg").textContent = ""; $("pickMsg").style.color = ""; }, 2500);
   }).catch(function () { staffFail($("pickMsg")); });
-};
+}
+$("pickBtn").onclick = function () { savePick($("pickSel").value); };
+$("pickClear").onclick = function () { savePick(""); };
 
 // ── 3) Record / edit / delete shots ────────────────────────────────
 function cancelEdit() {
