@@ -91,7 +91,9 @@
   .prizebox .prizes{padding:12px;}
   .prizebox .prizenote{margin:0;padding:0 24px 16px;}
   .prizebtn{border:1px solid #04D3AA;color:#04D3AA;background:transparent;}
-  #root.big .prizebtn{display:none;}
+  #root.big .prizebtn{border-width:2px;}
+  #root.big .modalbox{max-width:760px;padding:20px;}
+  #root.big .modalbox .sbtn{font-size:20px;padding:12px 28px;}
   #root.big .ptitle{font-size:44px;}#root.big .lhsub{font-size:24px;}
   .modal{position:fixed;inset:0;z-index:50;background:rgba(10,5,40,.82);display:flex;align-items:center;justify-content:center;padding:16px;}
   .modalbox{background:#120A48;width:100%;max-width:480px;max-height:88vh;overflow:auto;border-radius:2px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
@@ -498,14 +500,17 @@ $("lockBtn").onclick = function () {
 };
 
 // ── Prizes popup ───────────────────────────────────────────────────
-var lastFocus = null;
+var lastFocus = null, modalTimer = null;
 function openPrizes() {
   lastFocus = document.activeElement;
   $("prizeModal").hidden = false;
   renderPrizes();
   $("pmClose").focus();
+  clearTimeout(modalTimer);
+  if (big) modalTimer = setTimeout(closePrizes, 45000);   // table iPad: close itself if left open
 }
 function closePrizes() {
+  clearTimeout(modalTimer);
   $("prizeModal").hidden = true;
   if (lastFocus && lastFocus.focus) lastFocus.focus();
 }
