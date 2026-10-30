@@ -277,11 +277,12 @@ var VIEWERS = db.ref("viewers");
 var viewer = null;        // {name,email} once registered on this device
 var tab = "board";        // "board" | "staff"
 var staffOk = false;
+var kiosk = false;       // opened with ?screen=big (iPad table display)
 var bypass = false;      // staff tapped "Staff entry" on the front page
 var big = false;
 var shots = [];           // [{id,name,inches,ts}]
 var editId = null;
-var confirmId = null, confirmTimer = null;
+var confirmId = null, confirmTimer = null, savedTimer = null;
 var uid = null;
 var online = true;
 var updatedAt = "";
@@ -327,7 +328,7 @@ function showView() {
   $("vPin").hidden = !showPin;
   $("vStaff").hidden = !showStaff;
   $("nav").hidden = gate || big;
-  $("exitBig").hidden = !big;
+  $("exitBig").hidden = !big || kiosk;
   $("root").classList.toggle("big", big);
   $("tabBoard").classList.toggle("on", tab === "board");
   $("tabStaff").classList.toggle("on", tab === "staff");
@@ -565,12 +566,28 @@ $("shotForm").addEventListener("submit", function (e) {
   if (!$("fFeet").value && !$("fIn").value) { $("formErr").textContent = "Enter a distance."; return; }
   var total = ft * 12 + inch;
 
-  var day = curStaff();
-  var op = editId
-    ? SHOTS.child(editId).update({ name: name, inches: total, day: day })
+  var day = curStaff(), wasEdit = editId;
+  var op = wasEdit
+    ? SHOTS.child(wasEdit).update({ name: name, inches: total, day: day })
     : SHOTS.push({ name: name, inches: total, day: day, ts: firebase.database.ServerValue.TIMESTAMP });
-  op.then(function () { cancelEdit(); })
-    .catch(function () { $("formErr").textContent = "Could not save. Re-enter the staff PIN."; staffOk = false; db.ref("staffClaims/" + uid).remove().catch(function () {}); showView(); });
+
+  // Clear the form right away so a second tap can't save the shot twice.
+  // The shot shows on this phone's leaderboard immediately; Firebase syncs it when there is signal.
+  cancelEdit();
+  var msg = $("formErr");
+  msg.style.color = "#0a7d63";
+  msg.textContent = (online ? "Saved: " : "Saved on this phone. Will sync when signal returns: ") + name + ", " + fmt(total);
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(function () { if (msg.style.color) { msg.textContent = ""; msg.style.color = ""; } }, 6000);
+
+  op.catch(function () {
+    // Save was rejected (e.g. PIN changed). Put the numbers back so nothing has to be retyped.
+    clearTimeout(savedTimer); msg.style.color = "";
+    $("fName").value = name; $("fFeet").value = String(Math.floor(total / 12)); $("fIn").value = String(Math.round((total % 12) * 10) / 10);
+    if (wasEdit) { editId = wasEdit; $("formTitle").textContent = "Edit shot"; $("saveBtn").textContent = "Save changes"; $("cancelBtn").hidden = false; }
+    msg.textContent = "Could not save. Re-enter the staff PIN.";
+    staffOk = false; db.ref("staffClaims/" + uid).remove().catch(function () {}); showView();
+  });
 });
 
 $("staffRows").addEventListener("click", function (e) {
@@ -601,6 +618,10 @@ $("staffRows").addEventListener("click", function (e) {
 });
 
 // ── Go ─────────────────────────────────────────────────────────────
+// Direct link for the table iPad:  https://.../index.html?screen=big
+try {
+  if (new URLSearchParams(window.location.search).get("screen") === "big") { kiosk = true; big = true; bypass = true; tab = "board"; }
+} catch (e) {}
 initPick();
 showView();
 renderBoard(); renderStaff();
