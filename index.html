@@ -368,7 +368,7 @@ function prizeBox(day) {
   var note = day === 2 && !day1Pick ? '<div class="prizenote">The Day 1 winner has not picked yet.</div>' : "";
   return '<div class="prizebox"><div class="prizehead">' +
     '<div class="ptitle">' + (day === 1 ? "Prizes up for grabs" : "Prizes still available") + '</div>' +
-    '<div class="lhsub">Left-handed? Let us know if you\'re the winner and we\'ll set you up</div></div>' +
+    '<div class="lhsub">Left-handed? Let us know and we\'ll take care of it</div></div>' +
     '<div class="prizes">' + h + '</div>' + note + '</div>';
 }
 function renderPrizes() {
