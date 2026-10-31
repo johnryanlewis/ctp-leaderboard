@@ -78,10 +78,15 @@
   .daybtn.on .livetag{color:#120A48;}
   .panel{margin-top:32px;}
   .prizes{display:flex;flex-direction:column;gap:8px;}
-  .prize{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:2px;background:rgba(255,255,255,.08);}
-  .prize .pw{flex:1;min-width:0;}
-  .prize .pn{font:600 17px Inter;}
-  .prize .pd{margin-top:4px;font:400 13px/1.4 Inter;color:#EAEFFF;opacity:.8;}
+  .prize{display:flex;align-items:center;gap:14px;padding:14px 20px;border-radius:2px;background:rgba(255,255,255,.08);width:100%;border:0;text-align:left;color:#fff;font:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;}
+  .prize:hover{background:rgba(255,255,255,.14);}
+  .pthumb{position:relative;flex:none;width:72px;height:72px;background:#fff;border-radius:2px;overflow:hidden;display:block;}
+  .pthumb img{width:100%;height:100%;object-fit:contain;display:block;}
+  .pcount{position:absolute;left:0;right:0;bottom:0;background:rgba(18,10,72,.85);color:#fff;font:600 10px Inter;text-align:center;padding:3px 0;display:block;}
+  .prize.taken .pthumb{opacity:.45;}
+  .prize .pw{flex:1;min-width:0;display:block;}
+  .prize .pn{font:600 17px Inter;display:block;}
+  .prize .pd{display:block;margin-top:4px;font:400 13px/1.4 Inter;color:#EAEFFF;opacity:.8;}
   .prize.taken .pd{opacity:.4;}
   .prize .pt{font:600 13px Inter;color:#04D3AA;white-space:nowrap;}
   .prize.taken .pn{text-decoration:line-through;opacity:.5;}
@@ -101,6 +106,14 @@
   .modal{position:fixed;inset:0;z-index:50;background:rgba(10,5,40,.82);display:flex;align-items:center;justify-content:center;padding:16px;}
   .modalbox{background:#120A48;width:100%;max-width:480px;max-height:88vh;overflow:auto;border-radius:2px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
   .modalbox .closerow{display:flex;justify-content:flex-end;margin-bottom:8px;}
+  .modal.gal{z-index:60;}
+  .galhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;}
+  .galtitle{font:700 17px/1.2 Inter;}
+  .galgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .galtile{background:#fff;aspect-ratio:1/1;border-radius:2px;overflow:hidden;}
+  .galtile img{width:100%;height:100%;object-fit:contain;display:block;}
+  #root.big .pthumb{width:120px;height:120px;}#root.big .pcount{font-size:15px;padding:5px 0;}
+  #root.big .galtitle{font-size:28px;}
   .prizenote{margin-top:10px;font:400 14px Inter;color:#EAEFFF;}
   .card.slim{padding:20px;gap:12px;}
   .card .daybtn{background:#EEF0F8;color:#120A48;}
@@ -246,6 +259,13 @@
     </div>
   </div>
 
+  <div class="modal gal" id="galModal" hidden>
+    <div class="modalbox" role="dialog" aria-modal="true" aria-label="Prize photos">
+      <div class="galhead"><div class="galtitle" id="galTitle"></div><button class="sbtn" id="galClose" type="button">Close</button></div>
+      <div class="galgrid" id="galGrid"></div>
+    </div>
+  </div>
+
   <button id="exitBig" hidden>Exit big screen</button>
 </div>
 
@@ -338,14 +358,15 @@ function showView() {
 }
 
 // ── Event setup: edit prizes here ──────────────────────────────────
-// key = short id saved in the database, qty = how many of that prize exist, desc = small text under the name
+// key = id saved in the database, qty = how many exist, desc = small text under the name,
+// img = photo path in the repo (prizes/KEY-thumb.jpg and prizes/KEY-1.jpg ... KEY-4.jpg), photos = how many photos
 var PRIZES = [
-  { key: "driver", name: "Taylormade Qi4D Driver", qty: 2,
+  { key: "driver", name: "Taylormade Qi4D Driver", qty: 2, img: "prizes/driver", photos: 4,
     desc: "RH, 10.5 Degree, Mitsubishi Reax Mid Rotation Blue 60 Shaft, Stiff Flex" },
-  { key: "zt",     name: "Taylormade Spider ZT Putter", qty: 1,
+  { key: "zt",     name: "Taylormade Spider ZT Putter", qty: 1, img: "prizes/zt", photos: 4,
     desc: "RH, Black/Black, 35\"" },
-  { key: "tourx",  name: "Taylormade Spider Tour X Putter", qty: 1,
-    desc: "RH, Torched PVD, 35\"" }
+  { key: "tourx",  name: "Taylormade Spider Tour X Putter", qty: 1, img: "prizes/tourx", photos: 4,
+    desc: "RH, Small Slant, Torched PVD, 35\"" }
 ];
 
 // ── Day + prize state ──────────────────────────────────────────────
@@ -369,8 +390,13 @@ function prizeBox(day) {
     } else {
       tag = (p.qty > 1 ? p.qty + " available" : "Available") + (picked ? ". Day 1 winner's pick" : "");
     }
-    h += '<div class="' + cls + '"><div class="pw"><div class="pn">' + esc(p.name) + '</div>' +
-      (p.desc ? '<div class="pd">' + esc(p.desc) + '</div>' : '') + '</div><div class="pt">' + esc(tag) + '</div></div>';
+    var thumb = p.img
+      ? '<span class="pthumb"><img src="' + esc(p.img) + '-thumb.jpg" alt="" onerror="this.parentNode.style.display=\'none\'">' +
+        '<span class="pcount">' + (p.photos || 4) + ' photos</span></span>'
+      : "";
+    h += '<button type="button" class="' + cls + '" data-key="' + esc(p.key) + '" aria-label="' + esc(p.name) + ': view photos">' + thumb +
+      '<span class="pw"><span class="pn">' + esc(p.name) + '</span>' +
+      (p.desc ? '<span class="pd">' + esc(p.desc) + '</span>' : '') + '</span><span class="pt">' + esc(tag) + '</span></button>';
   });
   var note = day === 2 && !day1Pick ? '<div class="prizenote">The Day 1 winner has not picked yet.</div>' : "";
   return '<div class="prizebox"><div class="prizehead">' +
@@ -525,7 +551,43 @@ function closePrizes() {
 $("btnPrizes").onclick = openPrizes;
 $("pmClose").onclick = closePrizes;
 $("prizeModal").addEventListener("click", function (e) { if (e.target === $("prizeModal")) closePrizes(); });
-document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("prizeModal").hidden) closePrizes(); });
+
+// ── Prize photo gallery (2x2) ──────────────────────────────────────
+var galFocus = null, galTimer = null;
+function openGallery(key, trigger) {
+  var p = PRIZES.filter(function (k) { return k.key === key; })[0];
+  if (!p || !p.img) return;
+  var n = p.photos || 4, h = "";
+  for (var i = 1; i <= n; i++) {
+    h += '<div class="galtile"><img src="' + esc(p.img) + "-" + i + '.jpg" alt="' + esc(p.name) + ", photo " + i + " of " + n + '" loading="lazy"></div>';
+  }
+  galFocus = trigger;
+  $("galTitle").textContent = p.name;
+  $("galGrid").innerHTML = h;
+  $("galModal").hidden = false;
+  $("galClose").focus();
+  clearTimeout(galTimer);
+  if (big) galTimer = setTimeout(closeGallery, 45000);
+}
+function closeGallery() {
+  clearTimeout(galTimer);
+  $("galModal").hidden = true;
+  $("galGrid").innerHTML = "";
+  if (galFocus && galFocus.isConnected && galFocus.focus) galFocus.focus();
+}
+function prizeClick(e) {
+  var b = e.target.closest ? e.target.closest(".prize") : null;
+  if (b) openGallery(b.getAttribute("data-key"), b);
+}
+$("prizePanel").addEventListener("click", prizeClick);
+$("pmBody").addEventListener("click", prizeClick);
+$("galClose").onclick = closeGallery;
+$("galModal").addEventListener("click", function (e) { if (e.target === $("galModal")) closeGallery(); });
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape") return;
+  if (!$("galModal").hidden) closeGallery();
+  else if (!$("prizeModal").hidden) closePrizes();
+});
 
 // ── Day tabs, live-day switch, prize pick ──────────────────────────
 $("tabD1").onclick = function () { viewDay = 1; renderBoard(); };
