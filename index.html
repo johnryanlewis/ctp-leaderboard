@@ -79,7 +79,10 @@
   .panel{margin-top:32px;}
   .prizes{display:flex;flex-direction:column;gap:8px;}
   .prize{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:2px;background:rgba(255,255,255,.08);}
-  .prize .pn{flex:1;font:600 17px Inter;}
+  .prize .pw{flex:1;min-width:0;}
+  .prize .pn{font:600 17px Inter;}
+  .prize .pd{margin-top:4px;font:400 13px/1.4 Inter;color:#EAEFFF;opacity:.8;}
+  .prize.taken .pd{opacity:.4;}
   .prize .pt{font:600 13px Inter;color:#04D3AA;white-space:nowrap;}
   .prize.taken .pn{text-decoration:line-through;opacity:.5;}
   .prize.taken .pt{color:#FA6496;}
@@ -107,7 +110,7 @@
   select{padding:14px;border:1px solid #ccd;background:#fff;border-radius:2px;font:400 16px Inter;color:#120A48;width:100%;}
   select:focus-visible,.daybtn:focus-visible{outline:3px solid #549CFF;outline-offset:2px;}
   #root.big .daybtn{font-size:20px;padding:12px 24px;}
-  #root.big .prize .pn{font-size:28px;}#root.big .prize .pt{font-size:20px;}#root.big .prize{padding:20px 24px;}#root.big .prizenote{font-size:20px;}
+  #root.big .prize .pn{font-size:28px;}#root.big .prize .pd{font-size:20px;}#root.big .prize .pt{font-size:20px;}#root.big .prize{padding:20px 24px;}#root.big .prizenote{font-size:20px;}
   #root.big .stafftitle{font-size:16px;}
 
   /* staff */
@@ -335,11 +338,14 @@ function showView() {
 }
 
 // ── Event setup: edit prizes here ──────────────────────────────────
-// key = short id saved in the database, qty = how many of that prize exist
+// key = short id saved in the database, qty = how many of that prize exist, desc = small text under the name
 var PRIZES = [
-  { key: "driver", name: "Taylormade Qi4D Driver", qty: 2 },
-  { key: "zt",     name: "Taylormade Spider ZT Putter", qty: 1 },
-  { key: "tourx",  name: "Taylormade Spider Tour X Putter", qty: 1 }
+  { key: "driver", name: "Taylormade Qi4D Driver", qty: 2,
+    desc: "RH, 10.5 Degree, Mitsubishi Reax Mid Rotation Blue 60 Shaft, Stiff Flex" },
+  { key: "zt",     name: "Taylormade Spider ZT Putter", qty: 1,
+    desc: "RH, Black/Black, 35\"" },
+  { key: "tourx",  name: "Taylormade Spider Tour X Putter", qty: 1,
+    desc: "RH, Torched PVD, 35\"" }
 ];
 
 // ── Day + prize state ──────────────────────────────────────────────
@@ -363,12 +369,13 @@ function prizeBox(day) {
     } else {
       tag = (p.qty > 1 ? p.qty + " available" : "Available") + (picked ? ". Day 1 winner's pick" : "");
     }
-    h += '<div class="' + cls + '"><div class="pn">' + esc(p.name) + '</div><div class="pt">' + esc(tag) + '</div></div>';
+    h += '<div class="' + cls + '"><div class="pw"><div class="pn">' + esc(p.name) + '</div>' +
+      (p.desc ? '<div class="pd">' + esc(p.desc) + '</div>' : '') + '</div><div class="pt">' + esc(tag) + '</div></div>';
   });
   var note = day === 2 && !day1Pick ? '<div class="prizenote">The Day 1 winner has not picked yet.</div>' : "";
   return '<div class="prizebox"><div class="prizehead">' +
     '<div class="ptitle">' + (day === 1 ? "Prizes up for grabs" : "Prizes still available") + '</div>' +
-    '<div class="lhsub">Left-handed? Let us know and we\'ll take care of it</div></div>' +
+    '<div class="lhsub">Left-handed? Need a different length, color combo or shaft? Let us know and we\'ll take care of it.</div></div>' +
     '<div class="prizes">' + h + '</div>' + note + '</div>';
 }
 function renderPrizes() {
